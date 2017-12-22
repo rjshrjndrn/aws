@@ -60,6 +60,10 @@ ec2_group.add_argument('--image',
         type=str,
         help='os image id')
 
+ec2_group.add_argument('--region',
+        type=str,
+        help='Region to use')
+
 ec2_group.add_argument('--security_group',
         default='',
         type=str,
@@ -75,10 +79,11 @@ ec2_group.add_argument('--subnet_id',
         type=str,
         help='subnet id, if you want to launch instance in a specific vpc or subnet')
 
-ec2_group.add_argument('--keyname',
+ec2_group.add_argument('--key_name',
         default='rajesh_test_key', # My test key
         type=str,
-        help='Key pair to login to the instance')
+        help='Key pair to login to the instance \
+                if not exist, then create and save .pem in current working directory')
 
 ec2_group.add_argument('--tag',
         default='test_'+getuser(), # My user name
@@ -90,7 +95,10 @@ ec2_group.add_argument('--dryrun',
 
 args = parser.parse_args()
 s = Session(profile_name=args.profile)
-ec2 = s.resource('ec2')
+if not args.region:
+    ec2 = s.resource('ec2')
+else:
+    ec2 = s.resource('ec2',region_name=args.region)
 
 # Dynamic network config
 # If you don't care about subnets and vpcs and want to use all by default
@@ -107,14 +115,41 @@ else:
                             ],
                         }
 
+# Creating key pair
+if args.key_name:
+    try:
+        key_pair = ec2.create_key_pair(KeyName=args.key_name)
+        with open(args.key_name+'.pem','a') as key:
+            key.write(key_pair.key_material)
+        print(args.key_name+'created and .pem saved in current working directory')
+    except Exception as e:
+        print("Key: {} exists".format(args.key_name))
+
+# status of Instances
+def status(instance_id):
+    if not instance_id:
+        pass
+    elif instance_id=='all':
+        for i in ec2.instances.all():
+            # skipping all terminated instances
+            if i.private_ip_address:
+                print('\n{}\n{}\nName: {}\nStatus: {}\npublic ip: {}\nprivate ip: {}'.format(i.id, '*'*len(i.id),
+                    i.tags[0]['Value'], i.state['Name'], i.public_ip_address, i.private_ip_address))
+    else:
+        instances = instance_id.split(',')
+        for inst in instances:
+            i = ec2.Instance(id=inst)
+            print('\n{}\n{}\nName: {}\nStatus: {}\npublic ip: {}\nprivate ip: {}'.format(i.id, '*'*len(i.id),
+                i.tags[0]['Value'], i.state['Name'], i.public_ip_address, i.private_ip_address))
+
 # Creating instances
 if args.create:
     print('Creating {} Instances of {} with {}.Please use {} key' \
-        .format(args.count, args.type,args.image,args.keyname))
+        .format(args.count, args.type,args.image,args.key_name))
     try:
         instance = ec2.create_instances(ImageId=args.image,
                     InstanceType=args.type,
-                    KeyName=args.keyname,
+                    KeyName=args.key_name,
                     MinCount=1, MaxCount=args.count,
                     TagSpecifications=[{
                         'ResourceType': 'instance',
@@ -128,30 +163,11 @@ if args.create:
                     NetworkInterfaces=[network_interfaces],
                     DryRun=args.dryrun,
                 )
-        sleep(10*args.count)
-        print(instance)
+        sleep(5)
         for i in instance:
-            print('\n{}\n{}\nName: {}\nStatus: {}\npublic ip: {}\nprivate ip: {}'.format(i.id, '*'*len(i.id),
-                i.tags[0]['Value'], i.state['Name'], i.public_ip_address, i.private_ip_address))
+            status(i.id)
     except Exception as e:
         print(e)
-
-# status of Instances
-def status(*instance_id):
-    if not instance_id:
-        pass
-    elif instance_id[0]=='all':
-        for i in ec2.instances.all():
-            # skipping all terminated instances
-            if i.private_ip_address:
-                print('\n{}\n{}\nName: {}\nStatus: {}\npublic ip: {}\nprivate ip: {}'.format(i.id, '*'*len(i.id),
-                    i.tags[0]['Value'], i.state['Name'], i.public_ip_address, i.private_ip_address))
-    else:
-        instances = args.status.split(',')
-        for inst in instances:
-            i = ec2.Instance(id=inst)
-            print('\n{}\n{}\nName: {}\nStatus: {}\npublic ip: {}\nprivate ip: {}'.format(i.id, '*'*len(i.id),
-                i.tags[0]['Value'], i.state['Name'], i.public_ip_address, i.private_ip_address))
 
 # Checking status
 if args.status:
@@ -159,7 +175,10 @@ if args.status:
 
 # Changing ec2 to client for low level access
 # ie, start/stop/terminate
-ec2 = s.client('ec2')
+if not args.region:
+    ec2 = s.client('ec2')
+else:
+    ec2 = s.client('ec2', region_name=args.region)
 
 if args.start:
     instances = args.start.split(',')
