@@ -115,16 +115,6 @@ else:
                             ],
                         }
 
-# Creating key pair
-if args.key_name:
-    try:
-        key_pair = ec2.create_key_pair(KeyName=args.key_name)
-        with open(args.key_name+'.pem','a') as key:
-            key.write(key_pair.key_material)
-        print(args.key_name+'created and .pem saved in current working directory')
-    except Exception as e:
-        print("Key: {} exists".format(args.key_name))
-
 # status of Instances
 def status(instance_id):
     if not instance_id:
@@ -146,6 +136,15 @@ def status(instance_id):
 if args.create:
     print('Creating {} Instances of {} with {}.Please use {} key' \
         .format(args.count, args.type,args.image,args.key_name))
+    # Creating/checking key_pair
+    try:
+        key_pair = ec2.create_key_pair(KeyName=args.key_name)
+        with open(args.key_name+'.pem','a') as key:
+            key.write(key_pair.key_material)
+        print(args.key_name+'created and .pem saved in current working directory')
+    except Exception as e:
+        print("Key: {} exists".format(args.key_name))
+    # Creating Instances
     try:
         instance = ec2.create_instances(ImageId=args.image,
                     InstanceType=args.type,
