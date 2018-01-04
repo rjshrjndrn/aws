@@ -38,6 +38,11 @@ main_opts.add_argument('--status',
         help='show status of all instances except terminated. \
                 use comma seperated ids for a specific group instance')
 
+ec2_group.add_argument('--size',
+        default=8,
+        type=int,
+        help='size of the EBS disc in GB')
+
 ec2_group.add_argument('--count',
         default=1,
         type=int,
@@ -146,7 +151,15 @@ if args.create:
         print("Key: {} exists".format(args.key_name))
     # Creating Instances
     try:
-        instance = ec2.create_instances(ImageId=args.image,
+        instance = ec2.create_instances(
+                    BlockDeviceMappings=[{
+                        'DeviceName': '/dev/sda1',
+                        'Ebs': {
+                            'VolumeSize': args.size,
+                            'VolumeType': 'standard'
+                        },
+                    }],
+                    ImageId=args.image,
                     InstanceType=args.type,
                     KeyName=args.key_name,
                     MinCount=1, MaxCount=args.count,
