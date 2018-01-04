@@ -2,11 +2,11 @@
 
 **Options**
 ```
-➜  aws git:(master) ✗ ./aws_ec2.py -h
 usage: aws_ec2.py [-h] [--create] [--start START] [--stop STOP]
-                  [--terminate TERMINATE] [--status [STATUS]] [--count COUNT]
-                  [--profile PROFILE] [--type TYPE] [--image IMAGE]
-                  [--region REGION] [--security_group SECURITY_GROUP]
+                  [--terminate TERMINATE] [--status [STATUS]] [--size SIZE]
+                  [--count COUNT] [--profile PROFILE] [--type TYPE]
+                  [--image IMAGE] [--region REGION]
+                  [--security_group SECURITY_GROUP]
                   [--assosiate_public_ip ASSOSIATE_PUBLIC_IP]
                   [--subnet_id SUBNET_ID] [--key_name KEY_NAME] [--tag TAG]
                   [--dryrun]
@@ -34,6 +34,7 @@ Main Options:
                         (default: )
 
 EC2 create args:
+  --size SIZE           size of the EBS disc in GB (default: 8)
   --count COUNT         number of instances you want (default: 1)
   --type TYPE           Instance type (default: t2.micro)
   --image IMAGE         os image id (default: ami-bec974d8)
@@ -51,6 +52,7 @@ EC2 create args:
                         (default: rajesh_test_key)
   --tag TAG             Name tag for the instance (default: test_rajesh)
   --dryrun
+
 ```
 **Examples**
 
