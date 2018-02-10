@@ -1,9 +1,10 @@
 #!/usr/bin/python3
 
-from boto3 import Session
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
+from boto3 import Session
 from getpass import getuser
 from time import sleep
+
 
 parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
 
