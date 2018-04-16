@@ -73,7 +73,7 @@ ec2_group.add_argument('--region',
 ec2_group.add_argument('--security_group',
         default='',
         type=str,
-        help='Security Group Name')
+        help='Security Group ID')
 
 ec2_group.add_argument('--assosiate_public_ip',
         default=True,
