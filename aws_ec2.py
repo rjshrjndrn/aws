@@ -3,7 +3,6 @@
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from boto3 import Session
 from getpass import getuser
-from time import sleep
 
 
 parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
@@ -176,8 +175,8 @@ if args.create:
                     NetworkInterfaces=[network_interfaces],
                     DryRun=args.dryrun,
                 )
-        sleep(5)
         for i in instance:
+            i.wait_until_running()
             status(i.id)
     except Exception as e:
         print(e)
